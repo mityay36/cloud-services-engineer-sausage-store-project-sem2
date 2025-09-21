@@ -88,10 +88,10 @@ metadata:
   name: {{ .Release.Name }}-{{ .Chart.Name }}-vpa
 spec:
   targetRef:
-    apiVersion: "apps/v1"
+    apiVersion: apps/v1
     kind: Deployment
     name: {{ .Release.Name }}-{{ .Chart.Name }}
   updatePolicy:
-{{ toYaml .Values.vpa.updatePolicy | indent 4 }} 
+{{ toYaml .Values.vpa.updatePolicy | indent 4 }}
   resourcePolicy:
-{{ toYaml .Values.vpa.resourcePolicy | indent 4 }} 
+{{ toYaml .Values.vpa.resourcePolicy | indent 4 }}

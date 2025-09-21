@@ -1,0 +1,30 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: mongodb-init
+  annotations:
+    helm.sh/hook: "post-install"
+    helm.sh/hook-weight: "5"
+    helm.sh/hook-delete-policy: "hook-succeeded"
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: mongodb-init
+        image: mongo:7.0
+        command:
+        - /bin/bash
+        - -c
+        - |
+          mongo mongodb://admin:password@mongodb:27017/admin <<EOF
+          use sausage-store
+          db.createUser({
+            user: "reports",
+            pwd: "reportspassword", 
+            roles: [
+              { role: "readWrite", db: "sausage-store" }
+            ]
+          })
+          EOF
