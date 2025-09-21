@@ -40,6 +40,19 @@ backend:
         minAllowed:
           cpu: 100m
           memory: 256Mi
+  env:
+    postgresUri: "jdbc:postgresql://postgresql:5432/sausage-store"
+    postgresUser: "store"
+    postgresPassword: "storepassword"
+    reportPath: "/logs/reports"
+    logPath: "/logs"
+  service:
+    port: 8080
+  annotations:
+    path: "/actuator/prometheus"
+    port: "8080"
+    scrape: "true"
+
 
 backend-report:
   image: mityay36/sausage-backend-report:latest
@@ -84,17 +97,17 @@ frontend:
     path: "/"
     pathType: "Prefix"
 
-mongodb:
-  containerPort: 27017
-  env:
-    MONGO_INITDB_ROOT_USERNAME: "admin"
-    MONGO_INITDB_ROOT_PASSWORD: "password"
-
-postgresql:
-  containerPort: 5432
-  env:
-    POSTGRES_DB: "sausage-store"
-    POSTGRES_USER: "store"  
-    POSTGRES_PASSWORD: "storepassword"
+infra:
+  mongodb:
+    containerPort: 27017
+    env:
+      MONGO_INITDB_ROOT_USERNAME: "admin"
+      MONGO_INITDB_ROOT_PASSWORD: "password"
+  postgresql:
+    containerPort: 5432
+    env:
+      POSTGRES_DB: "sausage-store"
+      POSTGRES_USER: "store"  
+      POSTGRES_PASSWORD: "storepassword"
 
 environment: "production"
