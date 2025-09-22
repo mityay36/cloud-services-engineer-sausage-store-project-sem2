@@ -1,0 +1,12 @@
+postgresql:
+  containerPort: 5432
+  env:
+    POSTGRES_DB: "sausage-store"
+    POSTGRES_USER: "store"
+    POSTGRES_PASSWORD: "storepassword"
+    
+mongodb:
+  containerPort: 27017
+  env:
+    MONGO_INITDB_ROOT_USERNAME: "admin"
+    MONGO_INITDB_ROOT_PASSWORD: "password"
