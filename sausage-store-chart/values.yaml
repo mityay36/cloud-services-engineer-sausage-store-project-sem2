@@ -81,11 +81,11 @@ frontend:
   containerPort: 80
   resources:
     requests:
+      memory: "64Mi"
+      cpu: "25m"
+    limits:
       memory: "128Mi"
       cpu: "50m"
-    limits:
-      memory: "256Mi"
-      cpu: "100m"
   strategy:
     type: RollingUpdate
   revisionHistoryLimit: 3

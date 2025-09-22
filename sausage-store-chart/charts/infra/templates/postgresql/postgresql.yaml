@@ -33,6 +33,22 @@ spec:
           volumeMounts:
             - name: postgresql-data
               mountPath: /var/lib/postgresql/data
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - pg_isready -U {{ .Values.infra.postgresql.env.POSTGRES_USER }} -d {{ .Values.infra.postgresql.env.POSTGRES_DB }}
+            initialDelaySeconds: 15
+            periodSeconds: 5
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - pg_isready -U {{ .Values.infra.postgresql.env.POSTGRES_USER }} -d {{ .Values.infra.postgresql.env.POSTGRES_DB }}
+            initialDelaySeconds: 45
+            periodSeconds: 10
   volumeClaimTemplates:
     - metadata:
         name: postgresql-data
@@ -64,3 +80,4 @@ data:
   POSTGRES_DB: {{ .Values.infra.postgresql.env.POSTGRES_DB }}
   POSTGRES_USER: {{ .Values.infra.postgresql.env.POSTGRES_USER }}
   POSTGRES_PASSWORD: {{ .Values.infra.postgresql.env.POSTGRES_PASSWORD }}
+  PGDATA: {{ .Values.infra.postgresql.env.PGDATA }}

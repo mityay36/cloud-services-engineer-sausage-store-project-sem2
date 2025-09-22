@@ -5,6 +5,7 @@ infra:
       POSTGRES_DB: "sausage-store"
       POSTGRES_USER: "store"
       POSTGRES_PASSWORD: "storepassword"
+      PGDATA: "/var/lib/postgresql/data/pgdata"
       
   mongodb:
     containerPort: 27017
