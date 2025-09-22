@@ -93,7 +93,7 @@ jobs:
           
       - name: Setup kubeconfig
         run: |
-          echo "$KUBE_CONFIG" | base64 --decode > kubeconfig
+          echo "$KUBE_CONFIG" > kubeconfig
           export KUBECONFIG=kubeconfig
           
       - name: Add Helm repo and deploy
@@ -107,5 +107,5 @@ jobs:
             --set backend.image=${{ secrets.DOCKER_USER }}/sausage-backend:latest \
             --set frontend.image=${{ secrets.DOCKER_USER }}/sausage-frontend:latest \
             --set backend-report.image=${{ secrets.DOCKER_USER }}/sausage-backend-report:latest \
-            --set frontend.ingress.host=front-yourname.2sem.students-projects.ru \
+            --set frontend.ingress.host=front-dpokrovskiy.2sem.students-projects.ru \
             --set global.vault.vaultToken=$VAULT_TOKEN
