@@ -6,9 +6,24 @@ infra:
       POSTGRES_USER: "store"
       POSTGRES_PASSWORD: "storepassword"
       PGDATA: "/var/lib/postgresql/data/pgdata"
+    resources:
+      requests:
+        memory: 32Mi
+        cpu: 50m
+      limits:
+        memory: 64Mi
+        cpu: 100m
       
   mongodb:
+    image: mongo:latest
     containerPort: 27017
     env:
       MONGO_INITDB_ROOT_USERNAME: "admin"
       MONGO_INITDB_ROOT_PASSWORD: "password"
+    resources:
+      requests:
+        memory: "128Mi"
+        cpu: "100m"
+      limits:
+        memory: "256Mi"
+        cpu: "200m" 

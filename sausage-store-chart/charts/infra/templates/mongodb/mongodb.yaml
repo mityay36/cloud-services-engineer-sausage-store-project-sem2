@@ -1,11 +1,11 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: mongodb
+  name: {{ .Release.Name }}-{{ .Chart.Name }}
   annotations:
     helm.sh/hook-weight: "-5"
 spec:
-  serviceName: mongodb
+  serviceName: {{ .Release.Name }}-{{ .Chart.Name }}
   replicas: 1
   selector:
     matchLabels:
@@ -26,12 +26,7 @@ spec:
         ports:
         - containerPort: {{ .Values.infra.mongodb.containerPort }}
         resources:
-          requests:
-            memory: "128Mi"
-            cpu: "100m"
-          limits:
-            memory: "256Mi"
-            cpu: "200m"
+{{ toYaml .Values.infra.mongodb.resources | indent 10 }}
         volumeMounts:
         - name: mongodb-data
           mountPath: /data/db
@@ -57,3 +52,4 @@ spec:
   selector:
     app: mongodb
   clusterIP: None
+  
