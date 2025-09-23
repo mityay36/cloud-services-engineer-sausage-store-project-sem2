@@ -6,7 +6,7 @@ global:
     
 backend:
   image: mityay36/sausage-backend:latest
-  replicas: 2
+  replicas: 1
   containerPort: 8080
   resources:
     requests:
@@ -77,7 +77,7 @@ backend-report:
 
 frontend:
   image: mityay36/sausage-frontend:latest
-  replicas: 2
+  replicas: 1
   containerPort: 80
   resources:
     requests:
