@@ -51,26 +51,6 @@ spec:
         volumeMounts:
         - name: mongodb-data
           mountPath: /data/db
-        readinessProbe:
-          exec:
-            command:
-            - mongosh
-            - --eval
-            - "db.adminCommand('ping')"
-          initialDelaySeconds: 10
-          periodSeconds: 5
-          timeoutSeconds: 2
-          failureThreshold: 3
-        livenessProbe:
-          exec:
-            command:
-            - mongosh
-            - --eval
-            - "db.adminCommand('ping')"
-          initialDelaySeconds: 60
-          periodSeconds: 10
-          timeoutSeconds: 2
-          failureThreshold: 3
   volumeClaimTemplates:
   - metadata:
       name: mongodb-data
