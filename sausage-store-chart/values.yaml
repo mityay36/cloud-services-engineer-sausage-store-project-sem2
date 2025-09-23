@@ -73,7 +73,7 @@ backend-report:
     targetCPUUtilizationPercentage: 75
   env:
     port: "8080"
-    db: "mongodb://admin:password@mongodb:27017/sausage-store?authSource=admin"
+    db: "mongodb://reports:reportspassword@mongodb:27017/sausage-store"
 
 frontend:
   image: mityay36/sausage-frontend:latest
