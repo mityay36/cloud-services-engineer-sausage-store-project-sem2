@@ -26,7 +26,7 @@ spec:
         - -c
         - |
           # Ждем пока MongoDB станет доступен
-          until mongo --host mongodb --eval "print(\"waited for connection\")"
+          until mongosh --host mongodb --eval "print(\"waited for connection\")"
           do
             echo "Waiting for MongoDB..."
             sleep 2
@@ -35,7 +35,7 @@ spec:
           echo "MongoDB is ready, creating user..."
           
           # Создаем пользователя reports
-          mongo mongodb://admin:password@mongodb:27017/admin <<EOF
+          mongosh mongodb://admin:password@mongodb:27017/admin <<EOF
           use sausage-store
           db.createUser({
             user: "reports",

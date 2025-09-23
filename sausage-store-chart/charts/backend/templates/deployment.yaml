@@ -44,7 +44,7 @@ spec:
           - -c
           - |
             echo "Waiting for MongoDB user 'reports' to be created..."
-            until mongo mongodb://reports:reportspassword@mongodb:27017/sausage-store --eval "print('User ready')" 2>/dev/null
+            until mongosh mongodb://reports:reportspassword@mongodb:27017/sausage-store --eval "print('User ready')" 2>/dev/null
             do
               echo "User not ready yet, waiting..."
               sleep 5
