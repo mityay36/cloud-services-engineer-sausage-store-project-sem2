@@ -1,9 +1,57 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ .Release.Name }}-postgresql-secret
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: postgresql
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/version: {{ .Chart.AppVersion }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    app.kubernetes.io/component: database
+    app.kubernetes.io/part-of: {{ .Release.Name }}
+type: Opaque
+data:
+  username: {{ .Values.infra.postgresql.auth.username | b64enc }}
+  password: {{ .Values.infra.postgresql.auth.password | b64enc }}
+  database: {{ .Values.infra.postgresql.auth.database | b64enc }}
+  connection-url: {{ printf "jdbc:postgresql://postgresql:5432/%s" .Values.infra.postgresql.auth.database | b64enc }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-postgresql-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: postgresql
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/version: {{ .Chart.AppVersion }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    app.kubernetes.io/component: database
+    app.kubernetes.io/part-of: {{ .Release.Name }}
+data:
+  POSTGRES_DB: {{ .Values.infra.postgresql.auth.database }}
+  POSTGRES_USER: {{ .Values.infra.postgresql.auth.username }}
+  PGDATA: {{ .Values.infra.postgresql.persistence.mountPath }}/pgdata
+---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: postgresql
+  name: {{ .Release.Name }}-postgresql
+  namespace: {{ .Release.Namespace }}
   annotations:
     helm.sh/hook-weight: "-10"
+  labels:
+    app.kubernetes.io/name: postgresql
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/version: {{ .Chart.AppVersion }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    app.kubernetes.io/component: database
+    app.kubernetes.io/part-of: {{ .Release.Name }}
 spec:
   serviceName: postgresql
   replicas: 1
@@ -14,65 +62,78 @@ spec:
     metadata:
       labels:
         app: postgresql
+        app.kubernetes.io/name: postgresql
+        app.kubernetes.io/instance: {{ .Release.Name }}
     spec:
       containers:
-        - name: postgresql
-          image: postgres:13
-          envFrom:
-            - configMapRef:
-                name: postgresql-conf
-          ports:
-            - containerPort: {{ .Values.infra.postgresql.containerPort }}
-          resources:
-{{ toYaml .Values.infra.postgresql.resources | indent 12 }}
-          volumeMounts:
-            - name: postgresql-data
-              mountPath: /var/lib/postgresql/data
-          readinessProbe:
-            exec:
-              command:
-                - /bin/sh
-                - -c
-                - pg_isready -U {{ .Values.infra.postgresql.env.POSTGRES_USER }} -d {{ .Values.infra.postgresql.env.POSTGRES_DB }}
-            initialDelaySeconds: 15
-            periodSeconds: 5
-          livenessProbe:
-            exec:
-              command:
-                - /bin/sh
-                - -c
-                - pg_isready -U {{ .Values.infra.postgresql.env.POSTGRES_USER }} -d {{ .Values.infra.postgresql.env.POSTGRES_DB }}
-            initialDelaySeconds: 45
-            periodSeconds: 10
-  volumeClaimTemplates:
-    - metadata:
-        name: postgresql-data
-      spec:
-        accessModes: [ "ReadWriteOnce" ]
+      - name: postgresql
+        image: {{ .Values.infra.postgresql.image }}
+        envFrom:
+        - configMapRef:
+            name: {{ .Release.Name }}-postgresql-config
+        env:
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-postgresql-secret
+              key: password
+        ports:
+        - containerPort: {{ .Values.infra.postgresql.containerPort }}
+          name: postgresql
         resources:
-          requests:
-            storage: 2Gi
+          {{- toYaml .Values.infra.postgresql.resources | nindent 10 }}
+        volumeMounts:
+        - name: postgresql-data
+          mountPath: {{ .Values.infra.postgresql.persistence.mountPath }}
+        readinessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - pg_isready -U {{ .Values.infra.postgresql.auth.username }} -d {{ .Values.infra.postgresql.auth.database }}
+          initialDelaySeconds: 15
+          periodSeconds: 5
+          timeoutSeconds: 2
+          failureThreshold: 3
+        livenessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - pg_isready -U {{ .Values.infra.postgresql.auth.username }} -d {{ .Values.infra.postgresql.auth.database }}
+          initialDelaySeconds: 45
+          periodSeconds: 10
+          timeoutSeconds: 2
+          failureThreshold: 3
+  volumeClaimTemplates:
+  - metadata:
+      name: postgresql-data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: {{ .Values.infra.postgresql.persistence.size }}
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: postgresql
+  namespace: {{ .Release.Namespace }}
   labels:
-    app: postgresql
+    app.kubernetes.io/name: postgresql
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/version: {{ .Chart.AppVersion }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    app.kubernetes.io/component: database
+    app.kubernetes.io/part-of: {{ .Release.Name }}
 spec:
+  type: ClusterIP
+  clusterIP: None  # Headless service for StatefulSet
   ports:
-    - port: {{ .Values.infra.postgresql.containerPort }}
-      targetPort: {{ .Values.infra.postgresql.containerPort }}
+  - port: {{ .Values.infra.postgresql.containerPort }}
+    targetPort: {{ .Values.infra.postgresql.containerPort }}
+    protocol: TCP
+    name: postgresql
   selector:
     app: postgresql
-  clusterIP: None
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: postgresql-conf
-data:
-  POSTGRES_DB: {{ .Values.infra.postgresql.env.POSTGRES_DB }}
-  POSTGRES_USER: {{ .Values.infra.postgresql.env.POSTGRES_USER }}
-  POSTGRES_PASSWORD: {{ .Values.infra.postgresql.env.POSTGRES_PASSWORD }}
-  PGDATA: {{ .Values.infra.postgresql.env.PGDATA }}

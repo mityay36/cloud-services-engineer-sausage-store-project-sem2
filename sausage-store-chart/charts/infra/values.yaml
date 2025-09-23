@@ -1,25 +1,33 @@
 infra:
   postgresql:
+    image: "postgres:13"
     containerPort: 5432
-    env:
-      POSTGRES_DB: "sausage-store"
-      POSTGRES_USER: "store"
-      POSTGRES_PASSWORD: "storepassword"
-      PGDATA: "/var/lib/postgresql/data/pgdata"
+    auth:
+      username: "store"
+      password: "storepassword"
+      database: "sausage-store"
+    persistence:
+      size: "2Gi"
+      mountPath: "/var/lib/postgresql/data"
     resources:
       requests:
-        memory: 32Mi
-        cpu: 50m
+        memory: "32Mi"
+        cpu: "50m"
       limits:
-        memory: 64Mi
-        cpu: 100m
-      
+        memory: "64Mi"
+        cpu: "100m"
+        
   mongodb:
-    image: mongo:latest
+    image: "mongo:latest"
     containerPort: 27017
-    env:
-      MONGO_INITDB_ROOT_USERNAME: "admin"
-      MONGO_INITDB_ROOT_PASSWORD: "password"
+    database: "sausage-store"
+    auth:
+      rootUsername: "admin"
+      rootPassword: "password"
+      reportsUsername: "reports"
+      reportsPassword: "reportspassword"
+    persistence:
+      size: "1Gi"
     resources:
       requests:
         memory: "128Mi"

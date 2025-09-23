@@ -2,43 +2,82 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ .Chart.Name }}
+  name: {{ .Release.Name }}-mongodb-init
+  namespace: {{ .Release.Namespace }}
   annotations:
-    helm.sh/hook: "post-install"
+    helm.sh/hook: "post-install,post-upgrade"
     helm.sh/hook-weight: "5"
     helm.sh/hook-delete-policy: "hook-succeeded"
+  labels:
+    app.kubernetes.io/name: mongodb-init
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/version: {{ .Chart.AppVersion }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    app.kubernetes.io/component: database-init
+    app.kubernetes.io/part-of: {{ .Release.Name }}
 spec:
+  backoffLimit: 3
   template:
+    metadata:
+      labels:
+        app: mongodb-init
     spec:
       restartPolicy: Never
       containers:
-      - name: {{ .Chart.Name }}
+      - name: mongodb-init
         image: {{ .Values.infra.mongodb.image }}
         resources:
-{{ toYaml .Values.infra.mongodb.resources | indent 10 }}
+          {{- toYaml .Values.infra.mongodb.resources | nindent 10 }}
+        env:
+        - name: MONGO_ROOT_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-mongodb-secret
+              key: root-username
+        - name: MONGO_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-mongodb-secret
+              key: root-password
+        - name: REPORTS_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-mongodb-secret
+              key: reports-username
+        - name: REPORTS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-mongodb-secret
+              key: reports-password
         command:
         - /bin/bash
         - -c
         - |
-          # Ждем пока MongoDB станет доступен
-          until mongosh --host mongodb --eval "print(\"waited for connection\")"
-          do
-            echo "Waiting for MongoDB..."
-            sleep 2
+          set -e
+          echo "Waiting for MongoDB to be ready..."
+          until mongosh --host mongodb:{{ .Values.infra.mongodb.containerPort }} --username $MONGO_ROOT_USERNAME --password $MONGO_ROOT_PASSWORD --authenticationDatabase admin --eval "db.adminCommand('ping')" >/dev/null 2>&1; do
+            echo "MongoDB is not ready yet. Waiting..."
+            sleep 5
           done
-          
-          echo "MongoDB is ready, creating user..."
-          
-          # Создаем пользователя reports
-          mongosh mongodb://admin:password@mongodb:27017/admin <<EOF
-          use sausage-store
-          db.createUser({
-            user: "reports",
-            pwd: "reportspassword", 
-            roles: [
-              { role: "readWrite", db: "sausage-store" }
-            ]
-          })
+          echo "MongoDB is ready. Creating reports user..."
+          mongosh --host mongodb:{{ .Values.infra.mongodb.containerPort }} --username $MONGO_ROOT_USERNAME --password $MONGO_ROOT_PASSWORD --authenticationDatabase admin <<EOF
+          use {{ .Values.infra.mongodb.database }}
+          try {
+            db.createUser({
+              user: "$REPORTS_USERNAME",
+              pwd: "$REPORTS_PASSWORD",
+              roles: [
+                { role: "readWrite", db: "{{ .Values.infra.mongodb.database }}" }
+              ]
+            })
+            print("User '$REPORTS_USERNAME' created successfully!")
+          } catch (e) {
+            if (e.code === 11000) {
+              print("User '$REPORTS_USERNAME' already exists")
+            } else {
+              throw e
+            }
+          }
           EOF
-          
-          echo "User 'reports' created successfully!"
+          echo "MongoDB initialization completed successfully!"
