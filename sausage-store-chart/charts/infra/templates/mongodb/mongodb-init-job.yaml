@@ -25,6 +25,8 @@ spec:
             sleep 2
           done
           
+          echo "MongoDB is ready, creating user..."
+          
           # Создаем пользователя reports
           mongo mongodb://admin:password@mongodb:27017/admin <<EOF
           use sausage-store
@@ -36,3 +38,5 @@ spec:
             ]
           })
           EOF
+          
+          echo "User 'reports' created successfully!"

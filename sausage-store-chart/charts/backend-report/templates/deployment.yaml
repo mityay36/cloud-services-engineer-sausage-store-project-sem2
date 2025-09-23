@@ -24,29 +24,34 @@ spec:
       labels:
         app: {{ .Release.Name }}-{{ .Chart.Name }}
     spec:
+      initContainers:
+        - name: wait-for-mongodb-user
+          image: mongo:7.0
+          command:
+          - /bin/bash
+          - -c
+          - |
+            echo "Waiting for MongoDB user 'reports' to be created..."
+            until mongo mongodb://reports:reportspassword@mongodb:27017/sausage-store --eval "print('User ready')" 2>/dev/null
+            do
+              echo "User not ready yet, waiting..."
+              sleep 5
+            done
+            echo "MongoDB user 'reports' is ready!"
       containers:
         - name: {{ .Chart.Name }}
           image: {{ .Values.image }}
           imagePullPolicy: {{ .Values.global.imagePullPolicy }}
           env:
             - name: DB
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ .Release.Name }}-{{ .Chart.Name }}-conf
-                  key: db
+              value: "{{ .Values.env.db }}"
+            - name: PORT
+              value: "{{ .Values.env.port }}"
           resources:
 {{ toYaml .Values.resources | indent 12 }}
           ports:
             - name: {{ .Chart.Name }}
               containerPort: {{ .Values.containerPort }}
-      volumes:
-      - name: {{ .Release.Name }}-{{ .Chart.Name }}-conf
-        configMap:
-          name: {{ .Release.Name }}-{{ .Chart.Name }}-conf
-          items:
-            - key: db
-              path: db
-
 
 ---
 apiVersion: autoscaling/v2
