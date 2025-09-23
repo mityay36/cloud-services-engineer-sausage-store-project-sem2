@@ -29,11 +29,6 @@ spec:
           image: {{ .Values.image }}
           imagePullPolicy: {{ .Values.global.imagePullPolicy }}
           env:
-            - name: PORT
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ .Release.Name }}-{{ .Chart.Name }}-conf
-                  key: port
             - name: DB
               valueFrom:
                 configMapKeyRef:
@@ -51,8 +46,6 @@ spec:
           items:
             - key: db
               path: db
-            - key: port
-              path: port
 
 
 ---
