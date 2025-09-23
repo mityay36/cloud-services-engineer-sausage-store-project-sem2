@@ -44,7 +44,7 @@ spec:
           ports:
             - name: {{ .Chart.Name }}
               containerPort: {{ .Values.containerPort }}
-          volumes:
+      volumes:
       - name: {{ .Release.Name }}-{{ .Chart.Name }}-conf
         configMap:
           name: {{ .Release.Name }}-{{ .Chart.Name }}-conf
