@@ -28,12 +28,12 @@ spec:
         - name: wait-for-mongodb-user
           image: mongo:7.0
           resources:
-          requests:
-            memory: "32Mi"
-            cpu: "25m"
-          limits:
-            memory: "64Mi"
-            cpu: "50m"
+            requests:
+              memory: "32Mi"
+              cpu: "25m"
+            limits:
+              memory: "64Mi"
+              cpu: "50m"
           command:
           - /bin/bash
           - -c
