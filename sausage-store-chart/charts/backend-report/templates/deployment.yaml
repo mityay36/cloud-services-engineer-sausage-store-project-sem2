@@ -30,14 +30,30 @@ spec:
           imagePullPolicy: {{ .Values.global.imagePullPolicy }}
           env:
             - name: PORT
-              value: "{{ .Values.env.port }}"
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Release.Name }}-{{ .Chart.Name }}-conf
+                  key: port
             - name: DB
-              value: "{{ .Values.env.db }}"
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Release.Name }}-{{ .Chart.Name }}-conf
+                  key: db
           resources:
 {{ toYaml .Values.resources | indent 12 }}
           ports:
             - name: {{ .Chart.Name }}
               containerPort: {{ .Values.containerPort }}
+          volumes:
+      - name: {{ .Release.Name }}-{{ .Chart.Name }}-conf
+        configMap:
+          name: {{ .Release.Name }}-{{ .Chart.Name }}-conf
+          items:
+            - key: db
+              path: db
+            - key: port
+              path: port
+
 
 ---
 apiVersion: autoscaling/v2
