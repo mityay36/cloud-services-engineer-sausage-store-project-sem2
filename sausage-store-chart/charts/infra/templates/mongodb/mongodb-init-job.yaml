@@ -62,7 +62,7 @@ spec:
             sleep 2
           done
           echo "MongoDB is ready. Creating reports user..."
-          mongosh --host mongodb:{{ .Values.infra.mongodb.containerPort }} --username $MONGO_ROOT_USERNAME --password $MONGO_ROOT_PASSWORD --authenticationDatabase admin <<EOF
+          mongosh mongodb://$MONGO_ROOT_USERNAME:$MONGO_ROOT_PASSWORD@mongodb:{{ .Values.infra.mongodb.containerPort }}/admin <<EOF
           use {{ .Values.infra.mongodb.database }}
           try {
             db.createUser({
